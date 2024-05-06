@@ -35,15 +35,19 @@ def input_view(request):
         event_table = event_table[(event_table.start_time >= date1) & (event_table.start_time <= date2)]
 
         # Results
-        event_result = dxl.event_table_recommend(event_table, prompt)['choices'][0]['message']['content']
+        event_response = dxl.event_table_recommend(event_table, prompt)
         time.sleep(3)
-        loc_result = dxl.place_table_recommend(loc_table, prompt)['choices'][0]['message']['content']
-        time.sleep(3)
+        loc_response = dxl.place_table_recommend(loc_table, prompt)
+        try:
+            event_result = event_response['choices'][0]['message']['content']
+            loc_result = loc_response['choices'][0]['message']['content']
+        except TypeError:
+            event_result = event_response
+            loc_result = loc_response
+
 
         event_convert_links = convert_markdown_links(event_result)
-        time.sleep(3)
         loc_convert_links = convert_markdown_links(loc_result)
-        time.sleep(3)
         
         event_to_html = markdown(event_convert_links)
         loc_to_html = markdown(loc_convert_links)
