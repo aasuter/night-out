@@ -2,8 +2,10 @@ import requests as rq
 import datetime as dt
 import os
 # import applib as al
-from .helper import format_event_table, format_place_table
-
+from .helper import format_event_table
+from .helper import format_place_table
+from .helper import clean_input
+from json import JSONDecodeError
 
 class dbrxlib:
     def __init__(self, token,
@@ -34,6 +36,7 @@ class dbrxlib:
                temp = 0.8,
                top = 0.95,
                max = 4000):
+        prompt = clean_input(prompt)
         result = rq.post(
             url= f"https://dbc-83763f21-6ef2.cloud.databricks.com/serving-endpoints/databricks-{self.__mdl}/invocations",
             headers={"Content-Type": "application/json"},
@@ -42,7 +45,10 @@ class dbrxlib:
                  prompt +
                  f'"}}], "temperature":{temp}, "top_p":{top}, "max_tokens":{max}}}')
         if response_type == "full":
-            return result.json()
+            try:
+                return result.json()
+            except JSONDecodeError:
+                return result
         elif response_type in result.json()["choices"][0]:
             return result.json()["choices"][0][response_type]
         elif response_type == "pure":
@@ -100,7 +106,8 @@ class dbrxlib:
     def date_range_context():
         date_str = dt.date.today().strftime("%a, %dth %B, %Y")
         context_str = (f"Today is {date_str}. Give the date range described in the text below in the following "
-                       f"format:\\n\\nYYYY-MM-DD, YYYY-MM-DD\\n\\nReturn NOTHING ELSE.\\n\\nText:\\n\\n")
+                       f"format:\\n\\nYYYY-MM-DD, YYYY-MM-DD\\n\\nIf the date range is unclear "
+                       f"use your best judgement. Return NOTHING ELSE.\\n\\nText:\\n\\n")
         return context_str
 
     def ask_binary(self, bin_prompt, rt = "pure"):
@@ -172,5 +179,3 @@ class dbrxlib:
             return date1, date2
         except:
             return f"Got error: full string: {dates}"
-        
-    

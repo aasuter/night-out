@@ -2,10 +2,8 @@ import googlemaps
 import pandas as pd
 from serpapi import GoogleSearch
 from datetime import datetime as dt
-from django.utils.html import escape
-
-def clean_input(data):
-    return data.replace("'", "").replace('"', '')
+import re
+from markdown import markdown
 
 
 # helper functions
@@ -223,3 +221,10 @@ def place_search_table(searches,
                 place_table["lat"].append(lat)
                 place_table["lng"].append(lng)
     return pd.DataFrame(place_table).drop_duplicates()
+
+def convert_markdown_links(markdown_content):
+    # Regular expression to find Markdown links
+    pattern = r'\[([^\]]+)\]\(([^\)]+)\)'
+    # Replace Markdown links with HTML anchor tags
+    return re.sub(pattern, r'<a href="\2">\1</a>', markdown_content)
+
