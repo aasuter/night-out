@@ -3,8 +3,6 @@ import pandas as pd
 from serpapi import GoogleSearch
 from datetime import datetime as dt
 from os import environ
-from dotenv import load_dotenv
-load_dotenv()
 
 def clean_input(data):
     return data.replace("'", "").replace('"', '')

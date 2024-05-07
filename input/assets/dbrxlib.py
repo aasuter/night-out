@@ -2,8 +2,6 @@ import datetime as dt
 from .helper import format_event_table
 from .helper import format_place_table
 from langchain_community.llms import Databricks
-from dotenv import load_dotenv
-load_dotenv()
 
 class dbrxlib:
     def __init__(self,
