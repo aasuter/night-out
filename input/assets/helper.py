@@ -2,7 +2,9 @@ import googlemaps
 import pandas as pd
 from serpapi import GoogleSearch
 from datetime import datetime as dt
-from django.utils.html import escape
+from os import environ
+from dotenv import load_dotenv
+load_dotenv()
 
 def clean_input(data):
     return data.replace("'", "").replace('"', '')
@@ -68,7 +70,7 @@ def punt_esc(string):
 
 # TODO: Figure out how to keep secrets SECRETS
 def event_search_table(searches,
-                    serp_token = '3178120af63559009c5c85d525a3e03edbf578f338fc5a594c4bfd2b4e9420fe'):
+                    serp_token = environ["SERP_TOKEN"]):
     table = {
         "name": [],
         "time": [],
@@ -188,7 +190,7 @@ def format_place_table(table):
     return pass_str
 
 def place_search_table(searches,
-                       gmaps_token = 'AIzaSyDEl743McCkJUUUQ25jcA3I2dWFQQWOM5g'):
+                       gmaps_token = environ["GMAPS_TOKEN"]):
     place_table = {
         "name": [],
         "address": [],

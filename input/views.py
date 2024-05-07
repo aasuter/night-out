@@ -7,7 +7,7 @@ import re
 import time
 
 
-dxl = dbrxlib('dapi332901199cd5c09211e054893ef8bda9')
+dxl = dbrxlib()
 
 def convert_markdown_links(markdown_content):
     # Regular expression to find Markdown links
@@ -20,30 +20,24 @@ def input_view(request):
         prompt = request.POST.get("prompt")
         
         # Searches
-        gsearches = dxl.prompt_to_gsearch(prompt, rt = "pure")
+        gsearches = dxl.prompt_to_gsearch(prompt)
         time.sleep(3)
-        loc_searches = dxl.prompt_to_loc_search(prompt, rt = "pure")
-        time.sleep(3)
+        loc_searches = dxl.prompt_to_loc_search(prompt)
         
         # Tables
         event_table = event_search_table(gsearches)
         loc_table = place_search_table(loc_searches)
 
         # Date Filter
-        date1, date2 = dxl.get_date_range(prompt)
         time.sleep(3)
+        date1, date2 = dxl.get_date_range(prompt)
         event_table = event_table[(event_table.start_time >= date1) & (event_table.start_time <= date2)]
 
         # Results
-        event_response = dxl.event_table_recommend(event_table, prompt)
         time.sleep(3)
-        loc_response = dxl.place_table_recommend(loc_table, prompt)
-        try:
-            event_result = event_response['choices'][0]['message']['content']
-            loc_result = loc_response['choices'][0]['message']['content']
-        except TypeError:
-            event_result = event_response
-            loc_result = loc_response
+        event_result = dxl.event_table_recommend(event_table, prompt)
+        time.sleep(3)
+        loc_result = dxl.place_table_recommend(loc_table, prompt)
 
 
         event_convert_links = convert_markdown_links(event_result)
