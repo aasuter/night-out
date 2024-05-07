@@ -48,7 +48,7 @@ class dbrxlib:
             try:
                 return result.json()
             except JSONDecodeError:
-                return result
+                return result.content
         elif response_type in result.json()["choices"][0]:
             return result.json()["choices"][0][response_type]
         elif response_type == "pure":
