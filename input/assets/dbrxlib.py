@@ -1,20 +1,17 @@
-import requests as rq
 import datetime as dt
-import os
-# import applib as al
 from .helper import format_event_table
 from .helper import format_place_table
-from .helper import clean_input
-from json import JSONDecodeError
+from langchain_community.llms import Databricks
+from dotenv import load_dotenv
+load_dotenv()
 
 class dbrxlib:
-    def __init__(self, token,
+    def __init__(self,
                  model = "meta-llama-3-70b-instruct"):
         # assert os.path.isfile(token), "Tzoken file does not exist"
-        self.__mdl = model
-        self.change_model(model)
-        # TODO: How to keep Secrets SECRET
-        self.__token = 'dapi332901199cd5c09211e054893ef8bda9'
+        self.__llm = Databricks(endpoint_name = f"databricks-{model}",
+                                transform_input_fn = self.transform_input,
+                                extra_params = {"temperature": 0.8, "top_p": 0.95, "max_tokens": 4000})
 
     ## setters / getters
     def change_model(self, new_model):
@@ -22,37 +19,23 @@ class dbrxlib:
                              "meta-llama-3-70b-instruct",
                              "mixtral-8x7b-instruct",
                              "llama-2-70b-chat"], "Unrecognized Model"
-        self.__mdl = new_model
+        self.__llm = Databricks(endpoint_name = f"databricks-{new_model}",
+                                transform_input_fn = self.transform_input,
+                                extra_params = {"temperature": 0.8, "top_p": 0.95, "max_tokens": 4000})
 
-    def model(self):
-        return self.__mdl
-
-    def token(self):
-        return self.__token
+    @staticmethod
+    def transform_input(**request):
+        newjson = {"messages": [{"role": "user",
+                                 "content":request["prompt"]}],
+                   "temperature": request["temperature"],
+                   "top_p": request["top_p"],
+                   "max_tokens": request["max_tokens"]}
+        return newjson
 
     ## basic prompt function
-    def prompt(self, prompt,
-               response_type = "full",
-               temp = 0.8,
-               top = 0.95,
-               max = 4000):
-        prompt = clean_input(prompt)
-        result = rq.post(
-            url= f"https://dbc-83763f21-6ef2.cloud.databricks.com/serving-endpoints/databricks-{self.__mdl}/invocations",
-            headers={"Content-Type": "application/json"},
-            auth=("token", self.__token),
-            data='{"messages":[{"role":"user","content":"' +
-                 prompt +
-                 f'"}}], "temperature":{temp}, "top_p":{top}, "max_tokens":{max}}}')
-        if response_type == "full":
-            try:
-                return result.json()
-            except JSONDecodeError:
-                return result.content
-        elif response_type in result.json()["choices"][0]:
-            return result.json()["choices"][0][response_type]
-        elif response_type == "pure":
-            return result.json()["choices"][0]["message"]["content"]
+    def prompt(self, prompt):
+        response = self.__llm(prompt)
+        return response
 
 
     @staticmethod
@@ -110,68 +93,42 @@ class dbrxlib:
                        f"use your best judgement. Return NOTHING ELSE.\\n\\nText:\\n\\n")
         return context_str
 
-    def ask_binary(self, bin_prompt, rt = "pure"):
+    def ask_binary(self, bin_prompt):
         context = self.binary_context()
         full_prompt = context + bin_prompt
-        response = self.prompt(full_prompt, response_type = rt)
-        if rt != "pure":
-            return response
-        return response.lower() == "yes"
+        response = self.prompt(full_prompt)
+        return response
 
-    def prompt_to_gsearch(self, prompt, rt = "pure"):
+    def prompt_to_gsearch(self, prompt):
         context = self.gsearch_context()
         full_prompt = context + prompt
-        response = self.prompt(full_prompt, response_type = rt)
-        if rt != "pure":
-            return response
-        searches = response.split("\n")
-        return searches
+        response = self.prompt(full_prompt)
+        response = response.split("\n")
+        return response
 
-    def prompt_to_loc_search(self, prompt, rt = "pure"):
+    def prompt_to_loc_search(self, prompt):
         context = self.loc_search_context()
         full_prompt = context + prompt
-        response = self.prompt(full_prompt, response_type = rt)
-        if rt != "pure":
-            return response
-        searches = response.split("\n")
-        return searches
+        response = self.prompt(full_prompt)
+        response = response.split("\n")
+        return response
 
     def event_table_recommend(self, table, user_prompt):
         table_str = format_event_table(table)
         full_prompt = self.event_endpoint_context(user_prompt, table_str)
-        response = self.prompt(full_prompt, response_type = "full")
-        counter = 1
-        while "error_code" in response:
-            if counter > 50:
-                raise "ResponseError: Something's out of whack"
-            new_table_str = format_event_table(table)
-            full_prompt = self.event_endpoint_context(user_prompt,
-                                                      new_table_str)
-            response = self.prompt(full_prompt, response_type = "full")
-            counter += 1
+        response = self.prompt(full_prompt)
         return response
 
     def place_table_recommend(self, table, user_prompt):
         table_str = format_place_table(table)
         full_prompt = self.place_endpoint_context(user_prompt, table_str)
-        response = self.prompt(full_prompt, response_type = "full")
-        counter = 1
-        while "error_code" in response:
-            if counter > 50:
-                raise "ResponseError: Something's out of whack"
-            new_table_str = format_place_table(table)
-            full_prompt = self.place_endpoint_context(user_prompt,
-                                                      new_table_str)
-            response = self.prompt(full_prompt, response_type = "full")
-            counter += 1
+        response = self.prompt(full_prompt)
         return response
 
     def get_date_range(self, user_prompt, rt = "pure"):
         context = self.date_range_context()
         full_prompt = context + user_prompt
-        response = self.prompt(full_prompt, response_type = rt)
-        if rt != "pure":
-            return response
+        response = self.prompt(full_prompt)
         try:
             dates = response.split(", ")
             date1 = dt.datetime.strptime(dates[0], "%Y-%m-%d")

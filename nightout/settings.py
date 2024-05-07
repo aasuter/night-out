@@ -15,7 +15,8 @@ from django.core.management.utils import get_random_secret_key
 import os
 import sys
 import dj_database_url
-
+from dotenv import load_dotenv
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -33,6 +34,12 @@ DEBUG = os.getenv("DEBUG", "False") == "True"
 ALLOWED_HOSTS = os.getenv("DJANGO_ALLOWED_HOSTS", "127.0.0.1,localhost").split(",")
 
 DEVELOPMENT_MODE = os.getenv("DEVELOPMENT_MODE", "False") == "True"
+
+DATABRICKS_TOKEN = os.environ["DATABRICKS_TOKEN"]
+DATABRICKS_HOST = os.environ["DATABRICKS_HOST"]
+SERP_TOKEN = os.environ["SERP_TOKEN"]
+GMAPS_TOKEN = os.environ["GMAPS_TOKEN"]
+
 
 
 # Application definition
