@@ -1,0 +1,48 @@
+---
+title: "PlanMyNite"
+author: Andrew Suter
+date: "Last Updated: `r Sys.Date()`"
+output:
+    bookdown::html_document2:
+        highlight: tango
+        toc: true
+        theme: united
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = F)
+library(reticulate)
+library(DT)
+library(skimr)
+```
+
+# Write-Up {-}
+Planning a trip? Ask our LLM what's going on at your destination and have it give you a number of activities and points of interest.
+
+
+## Inspiration {-}
+I like to travel, but I don't like to plan. It would be nice if I could just ask a robot to tell me what options there are for things to do and places to see, so we built just that.
+
+## What it does {-}
+Using just a text prompt, our web app will show two responses from two bots, one of whom will provide details on events happening in your destination, including ticket links and recommendations, and the other will look for places of interest that align with your stated interests.
+
+## How we built it {-}
+This tool is built in python using the django framework for the web app. The LLM is the meta-llama-3-70b foundation model offered by databricks, and we've implemented RAG using serpapi. The user's prompt is parsed into a list of searches by the LLM, fed into serpapi, and then the results are parsed into a table, formatted into text and fed to the LLM as context for a response to the user.
+
+## Challenges we ran into {-}
+
+- Connecting to and implementing various APIs
+- Prompt engineering for good responses from foundation models
+- Writing and hosting the django frontend
+- Formatting queries correctly for the LLM API (still struggling with this one but given the time we were allotted I think we did pretty well, we get the occasional JSONDecodeError, but I'm mystified on where it's coming from at this point)
+- Some LLM hallucination
+## Accomplishments that we're proud of {-}
+
+- Implementing live RAG using serpapi
+- Having our LLMs respond to the user with links and context
+- Putting all of this into a django frontend
+## What we learned {-}
+
+- How to implement live RAG using search results
+- How to use the requests library in python to prompt LLMs
+- Building a django frontend using bootstrap4
+- Hosting django apps
